@@ -1,4 +1,4 @@
-package com.guflimc.brick.stats.api.entity;
+package com.guflimc.brick.stats.api.relation;
 
 import com.guflimc.brick.stats.api.key.StatsKey;
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +9,6 @@ import java.util.UUID;
 @FunctionalInterface
 public interface RelationProvider {
 
-    Optional<UUID> relation(@NotNull UUID playerId, @NotNull StatsKey key);
+    Optional<UUID> relation(@NotNull UUID entityId, @NotNull StatsKey key);
 
 }

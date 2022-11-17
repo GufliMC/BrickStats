@@ -5,7 +5,7 @@ import com.guflimc.brick.scheduler.api.Scheduler;
 import com.guflimc.brick.stats.api.StatsManager;
 import com.guflimc.brick.stats.api.container.StatsContainer;
 import com.guflimc.brick.stats.api.container.StatsRecord;
-import com.guflimc.brick.stats.api.entity.RelationProvider;
+import com.guflimc.brick.stats.api.relation.RelationProvider;
 import com.guflimc.brick.stats.api.key.StatsKey;
 import com.guflimc.brick.stats.common.container.BrickStatsContainer;
 import com.guflimc.brick.stats.common.domain.DStatsRecord;

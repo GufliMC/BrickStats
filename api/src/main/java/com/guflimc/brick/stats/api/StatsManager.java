@@ -2,7 +2,7 @@ package com.guflimc.brick.stats.api;
 
 import com.guflimc.brick.stats.api.container.StatsContainer;
 import com.guflimc.brick.stats.api.container.StatsRecord;
-import com.guflimc.brick.stats.api.entity.RelationProvider;
+import com.guflimc.brick.stats.api.relation.RelationProvider;
 import com.guflimc.brick.stats.api.key.StatsKey;
 import org.jetbrains.annotations.NotNull;
 
