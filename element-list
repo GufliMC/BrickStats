@@ -1,4 +1,4 @@
 com.guflimc.brick.stats.api
 com.guflimc.brick.stats.api.container
-com.guflimc.brick.stats.api.entity
 com.guflimc.brick.stats.api.key
+com.guflimc.brick.stats.api.relation
