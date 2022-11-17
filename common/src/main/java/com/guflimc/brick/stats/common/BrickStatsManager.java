@@ -5,8 +5,8 @@ import com.guflimc.brick.scheduler.api.Scheduler;
 import com.guflimc.brick.stats.api.StatsManager;
 import com.guflimc.brick.stats.api.container.StatsContainer;
 import com.guflimc.brick.stats.api.container.StatsRecord;
-import com.guflimc.brick.stats.api.relation.RelationProvider;
 import com.guflimc.brick.stats.api.key.StatsKey;
+import com.guflimc.brick.stats.api.relation.RelationProvider;
 import com.guflimc.brick.stats.common.container.BrickStatsContainer;
 import com.guflimc.brick.stats.common.domain.DStatsRecord;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +35,9 @@ public class BrickStatsManager implements StatsManager {
         records.forEach(r -> {
             mapped.computeIfAbsent(r.id(), (x) -> new ArrayList<>());
             mapped.get(r.id()).add(r);
+
+            mapped.computeIfAbsent(r.relation(), (x) -> new ArrayList<>());
+            mapped.get(r.relation()).add(r);
         });
 
         mapped.keySet().forEach(id -> {
@@ -46,9 +49,9 @@ public class BrickStatsManager implements StatsManager {
 
     public void save(int max) {
         Set<Object> recordsToSave = new HashSet<>();
-        for ( int i = 0; i < max; i++ ) {
+        for (int i = 0; i < max; i++) {
             DStatsRecord record = savingQueue.poll();
-            if ( record == null ) {
+            if (record == null) {
                 break;
             }
             recordsToSave.add(record);
@@ -64,22 +67,27 @@ public class BrickStatsManager implements StatsManager {
 
     @Override
     public int read(@NotNull UUID id, @NotNull StatsKey key) {
-        return read(id, key, null);
+        return read(id, null, key);
     }
 
     @Override
-    public int read(@NotNull UUID id, @NotNull StatsKey key, UUID relation) {
-        return find(id).read(key, relation);
+    public int read(@NotNull UUID id, UUID relation, @NotNull StatsKey key) {
+        return find(id).read(relation, key);
     }
 
     @Override
     public void update(@NotNull UUID id, @NotNull StatsKey key, @NotNull IntFunction<Integer> updater) {
-        update(id, key, null, updater);
+        update(id, null, key, updater);
     }
 
     @Override
-    public void update(@NotNull UUID id, @NotNull StatsKey key, UUID relation, @NotNull IntFunction<Integer> updater) {
-        DStatsRecord rec = find(id).find(key, relation);
+    public void update(@NotNull UUID id, UUID relation, @NotNull StatsKey key, @NotNull IntFunction<Integer> updater) {
+        update(id, relation, key, updater, new HashSet<>());
+    }
+
+    public void update(@NotNull UUID id, UUID relation, @NotNull StatsKey key,
+                       @NotNull IntFunction<Integer> updater, @NotNull Collection<UUID> passed) {
+        DStatsRecord rec = find(id).find(relation, key);
         int oldValue = rec.value();
 
         rec.setValue(updater.apply(rec.value()));
@@ -87,20 +95,19 @@ public class BrickStatsManager implements StatsManager {
 
         handleUpdate(id, key, oldValue, rec);
 
-        if ( key.parent() != null ) {
-            update(id, key.parent(), relation, updater);
+        if (key.parent() != null) {
+            update(id, relation, key.parent(), updater, new HashSet<>());
         }
 
-        if (relation != null) {
-            return;
-        }
+        passed.add(id);
 
         // also update relations
         relationProviders.stream()
                 .map(r -> r.relation(id, key).orElse(null))
                 .filter(Objects::nonNull)
+                .filter(r -> !passed.contains(r))
                 .distinct()
-                .forEach(r -> update(r, key, id, updater));
+                .forEach(r -> update(r, id, key, updater));
     }
 
     @Override
@@ -116,13 +123,19 @@ public class BrickStatsManager implements StatsManager {
     //
 
     private final Set<MilestoneListener> milestoneListeners = new HashSet<>();
-    private record MilestoneListener(@NotNull StatsKey key, int milestone, @NotNull Consumer<StatsRecord> handler) {}
+
+    private record MilestoneListener(@NotNull StatsKey key, int milestone, @NotNull Consumer<StatsRecord> handler) {
+    }
 
     private final Set<ChangeListener> changeListeners = new HashSet<>();
-    private record ChangeListener(@NotNull StatsKey key, @NotNull BiConsumer<StatsRecord, Integer> handler) {}
+
+    private record ChangeListener(@NotNull StatsKey key, @NotNull BiConsumer<StatsRecord, Integer> handler) {
+    }
 
     private final Set<ModuloListener> moduloListeners = new HashSet<>();
-    private record ModuloListener(@NotNull StatsKey key, int divisor, @NotNull Consumer<StatsRecord> handler) {}
+
+    private record ModuloListener(@NotNull StatsKey key, int divisor, @NotNull Consumer<StatsRecord> handler) {
+    }
 
     private void handleUpdate(@NotNull UUID id, @NotNull StatsKey key, int oldValue, StatsRecord record) {
         milestoneListeners.stream().filter(ml -> ml.key.equals(key))
@@ -137,11 +150,11 @@ public class BrickStatsManager implements StatsManager {
                     int oldAmount = oldValue / ml.divisor;
                     int newAmount = record.value() / ml.divisor;
                     int diff = newAmount - oldAmount;
-                    if ( diff < 0 ) {
+                    if (diff < 0) {
                         return;
                     }
 
-                    for ( int i = 0; i < diff; i++ ) {
+                    for (int i = 0; i < diff; i++) {
                         ml.handler.accept(record);
                     }
                 });

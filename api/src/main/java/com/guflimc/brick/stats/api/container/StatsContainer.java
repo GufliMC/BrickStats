@@ -11,6 +11,6 @@ public interface StatsContainer {
 
     int read(@NotNull StatsKey key);
 
-    int read(@NotNull StatsKey key, UUID relation);
+    int read(UUID relation, @NotNull StatsKey key);
 
 }

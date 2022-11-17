@@ -15,18 +15,18 @@ public interface StatsManager {
 
     int read(@NotNull UUID id, @NotNull StatsKey key);
 
-    int read(@NotNull UUID id, @NotNull StatsKey key, UUID relation);
+    int read(@NotNull UUID id, UUID relation, @NotNull StatsKey key);
 
     void update(@NotNull UUID id, @NotNull StatsKey key, @NotNull IntFunction<Integer> updater);
 
-    void update(@NotNull UUID id, @NotNull StatsKey key, UUID relation, @NotNull IntFunction<Integer> updater);
+    void update(@NotNull UUID id, UUID relation, @NotNull StatsKey key, @NotNull IntFunction<Integer> updater);
 
     default void write(@NotNull UUID id, @NotNull StatsKey key, int value) {
-        write(id, key, null, value);
+        write(id, null, key, value);
     }
 
-    default void write(@NotNull UUID id, @NotNull StatsKey key, UUID relation, int value) {
-        update(id, key, relation, ignored -> value);
+    default void write(@NotNull UUID id, UUID relation, @NotNull StatsKey key, int value) {
+        update(id, relation, key, ignored -> value);
     }
 
     StatsContainer readAll(@NotNull UUID id);
