@@ -25,7 +25,6 @@ public class BrickStatsManager implements StatsManager {
     private final Set<RelationProvider> relationProviders = new CopyOnWriteArraySet<>();
 
     private final Queue<DStatsRecord> savingQueue = new ArrayDeque<>();
-
     private final DatabaseContext databaseContext;
 
     public BrickStatsManager(DatabaseContext databaseContext, Scheduler scheduler) {
@@ -110,21 +109,56 @@ public class BrickStatsManager implements StatsManager {
     }
 
     @Override
-    public void register(@NotNull RelationProvider relationProvider) {
+    public void registerRelationProvider(@NotNull RelationProvider relationProvider) {
         relationProviders.add(relationProvider);
     }
 
+    //
+
+    private final Set<MilestoneListener> milestoneListeners = new HashSet<>();
+    private record MilestoneListener(@NotNull StatsKey key, int milestone, @NotNull Consumer<StatsRecord> handler) {}
+
+    private final Set<ChangeListener> changeListeners = new HashSet<>();
+    private record ChangeListener(@NotNull StatsKey key, @NotNull BiConsumer<StatsRecord, Integer> handler) {}
+
+    private final Set<ModuloListener> moduloListeners = new HashSet<>();
+    private record ModuloListener(@NotNull StatsKey key, int divisor, @NotNull Consumer<StatsRecord> handler) {}
+
     private void handleUpdate(@NotNull UUID id, @NotNull StatsKey key, int oldValue, StatsRecord record) {
-        // TODO
+        milestoneListeners.stream().filter(ml -> ml.key.equals(key))
+                .filter(ml -> oldValue < ml.milestone && record.value() > ml.milestone)
+                .forEach(ml -> ml.handler.accept(record));
+
+        changeListeners.stream().filter(cl -> cl.key.equals(key))
+                .forEach(cl -> cl.handler.accept(record, oldValue));
+
+        moduloListeners.stream().filter(ml -> ml.key.equals(key))
+                .forEach(ml -> {
+                    int oldAmount = oldValue / ml.divisor;
+                    int newAmount = record.value() / ml.divisor;
+                    int diff = newAmount - oldAmount;
+                    if ( diff < 0 ) {
+                        return;
+                    }
+
+                    for ( int i = 0; i < diff; i++ ) {
+                        ml.handler.accept(record);
+                    }
+                });
     }
 
     @Override
     public void registerMilestoneListener(@NotNull StatsKey key, int milestone, @NotNull Consumer<StatsRecord> handler) {
-
+        milestoneListeners.add(new MilestoneListener(key, milestone, handler));
     }
 
     @Override
     public void registerChangeListener(@NotNull StatsKey key, @NotNull BiConsumer<StatsRecord, Integer> handler) {
+        changeListeners.add(new ChangeListener(key, handler));
+    }
 
+    @Override
+    public void registerModuloListener(@NotNull StatsKey key, int divisor, @NotNull Consumer<StatsRecord> handler) {
+        moduloListeners.add(new ModuloListener(key, divisor, handler));
     }
 }

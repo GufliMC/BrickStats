@@ -31,10 +31,12 @@ public interface StatsManager {
 
     StatsContainer readAll(@NotNull UUID id);
 
-    void register(@NotNull RelationProvider relationProvider);
+    void registerRelationProvider(@NotNull RelationProvider relationProvider);
 
     void registerMilestoneListener(@NotNull StatsKey key, int milestone, @NotNull Consumer<StatsRecord> handler);
 
     void registerChangeListener(@NotNull StatsKey key, @NotNull BiConsumer<StatsRecord, Integer> handler);
+
+    void registerModuloListener(@NotNull StatsKey key, int divisor, @NotNull Consumer<StatsRecord> handler);
 
 }
