@@ -1,0 +1,31 @@
+plugins {
+    id 'net.minecrell.plugin-yml.bukkit' version '0.5.1'
+}
+
+repositories {
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+}
+
+dependencies {
+    // provided by platform
+    compileOnly 'org.spigotmc:spigot-api:1.18.2-R0.1-SNAPSHOT'
+
+    implementation (project(':common')) {
+        exclude group: 'com.google.code.gson' // provided by platform
+    }
+
+    // shadow
+    implementation 'com.guflimc.brick.scheduler:spigot-api:+'
+}
+
+bukkit {
+    name = rootProject.name
+    main = 'com.guflimc.brick.stats.spigot.SpigotBrickStats'
+    description = 'Keep track of various included and custom statistics'
+    author = 'GufliMC'
+    website = 'https://github.com/GufliMC/BrickStats'
+    apiVersion = '1.18'
+}
+
+// I want it nice like that
+generateBukkitPluginDescription.group = "minecraft"

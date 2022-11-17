@@ -1,0 +1,9 @@
+{
+  "database": {
+    "dsn": "jdbc:mysql://localhost/brickstats",
+    "driver": "com.mysql.cj.jdbc.Driver",
+    "username": "root",
+    "password": "root",
+    "debug": true
+  }
+}
