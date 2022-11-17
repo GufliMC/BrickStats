@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.guflimc.brick.stats.api"},{"l":"com.guflimc.brick.stats.api.container"},{"l":"com.guflimc.brick.stats.api.entity"},{"l":"com.guflimc.brick.stats.api.key"}];updateSearchResults();
