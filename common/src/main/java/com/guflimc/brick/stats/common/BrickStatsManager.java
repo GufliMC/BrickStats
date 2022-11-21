@@ -36,8 +36,10 @@ public class BrickStatsManager implements StatsManager {
             mapped.computeIfAbsent(r.id(), (x) -> new ArrayList<>());
             mapped.get(r.id()).add(r);
 
-            mapped.computeIfAbsent(r.relation(), (x) -> new ArrayList<>());
-            mapped.get(r.relation()).add(r);
+            if ( r.relation() != null ) {
+                mapped.computeIfAbsent(r.relation(), (x) -> new ArrayList<>());
+                mapped.get(r.relation()).add(r);
+            }
         });
 
         mapped.keySet().forEach(id -> {
