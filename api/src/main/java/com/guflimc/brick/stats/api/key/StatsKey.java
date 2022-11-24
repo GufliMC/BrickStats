@@ -1,9 +1,11 @@
 package com.guflimc.brick.stats.api.key;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 public final class StatsKey {
 
@@ -12,13 +14,16 @@ public final class StatsKey {
     private final String name;
     private final StatsKey parent;
 
-    private StatsKey(@NotNull String name, StatsKey parent) {
+    private StatsKey(@NotNull String name, @Nullable StatsKey parent) {
+        if ( name.contains(".") ) {
+            throw new IllegalArgumentException("Name cannot contain dots.");
+        }
         this.name = name.toLowerCase();
         this.parent = parent;
         KEYS.put(name(), this);
     }
 
-    public StatsKey(@NotNull String name) {
+    private StatsKey(@NotNull String name) {
         this(name, null);
     }
 
@@ -32,22 +37,30 @@ public final class StatsKey {
 
     //
 
-    public StatsKey of(@NotNull String sub) {
+    public StatsKey with(@NotNull String sub) {
         return new StatsKey(sub, this);
     }
 
-    public StatsKey of(@NotNull Object sub) {
-        return of(sub.toString());
+    public StatsKey with(@NotNull Object sub) {
+        return with(sub.toString());
     }
 
-    public StatsKey of(@NotNull Enum<?> sub) {
-        return of(sub.name());
+    public StatsKey with(@NotNull Enum<?> sub) {
+        return with(sub.name());
     }
 
     //
 
-    public static StatsKey valueOf(String name) {
-        return KEYS.get(name);
+    public static StatsKey of(String name) {
+        if ( KEYS.containsKey(name) ) {
+            return KEYS.get(name);
+        }
+        String[] subs = name.split(Pattern.quote("."));
+        StatsKey key = null;
+        for ( String sub : subs ) {
+            key = new StatsKey(sub, key);
+        }
+        return key;
     }
 
     public static StatsKey[] values() {

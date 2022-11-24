@@ -13,7 +13,7 @@ public class BlockListener implements Listener {
     public void onBreak(BlockBreakEvent event) {
         StatsAPI.get().update(
                 event.getPlayer().getUniqueId(),
-                Keys.BLOCKS_BROKEN.of(event.getBlock().getType()),
+                Keys.BLOCKS_BROKEN.with(event.getBlock().getType()),
                 x -> x + 1
         );
     }
@@ -22,7 +22,7 @@ public class BlockListener implements Listener {
     public void onPlace(BlockBreakEvent event) {
         StatsAPI.get().update(
                 event.getPlayer().getUniqueId(),
-                Keys.BLOCKS_PLACED.of(event.getBlock().getType()),
+                Keys.BLOCKS_PLACED.with(event.getBlock().getType()),
                 x -> x + 1
         );
     }

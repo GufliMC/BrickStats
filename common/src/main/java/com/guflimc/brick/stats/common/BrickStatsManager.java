@@ -134,9 +134,9 @@ public class BrickStatsManager implements StatsManager {
     private record ChangeListener(@NotNull StatsKey key, @NotNull BiConsumer<StatsRecord, Integer> handler) {
     }
 
-    private final Set<ModuloListener> moduloListeners = new HashSet<>();
+    private final Set<IntervalListener> intervalListeners = new HashSet<>();
 
-    private record ModuloListener(@NotNull StatsKey key, int divisor, @NotNull Consumer<StatsRecord> handler) {
+    private record IntervalListener(@NotNull StatsKey key, int interval, @NotNull Consumer<StatsRecord> handler) {
     }
 
     private void handleUpdate(@NotNull UUID id, @NotNull StatsKey key, int oldValue, StatsRecord record) {
@@ -147,10 +147,10 @@ public class BrickStatsManager implements StatsManager {
         changeListeners.stream().filter(cl -> cl.key.equals(key))
                 .forEach(cl -> cl.handler.accept(record, oldValue));
 
-        moduloListeners.stream().filter(ml -> ml.key.equals(key))
+        intervalListeners.stream().filter(ml -> ml.key.equals(key))
                 .forEach(ml -> {
-                    int oldAmount = oldValue / ml.divisor;
-                    int newAmount = record.value() / ml.divisor;
+                    int oldAmount = oldValue / ml.interval;
+                    int newAmount = record.value() / ml.interval;
                     int diff = newAmount - oldAmount;
                     if (diff < 0) {
                         return;
@@ -173,7 +173,7 @@ public class BrickStatsManager implements StatsManager {
     }
 
     @Override
-    public void registerModuloListener(@NotNull StatsKey key, int divisor, @NotNull Consumer<StatsRecord> handler) {
-        moduloListeners.add(new ModuloListener(key, divisor, handler));
+    public void registerIntervalListener(@NotNull StatsKey key, int interval, @NotNull Consumer<StatsRecord> handler) {
+        intervalListeners.add(new IntervalListener(key, interval, handler));
     }
 }

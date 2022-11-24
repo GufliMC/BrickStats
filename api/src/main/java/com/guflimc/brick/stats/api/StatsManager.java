@@ -37,6 +37,6 @@ public interface StatsManager {
 
     void registerChangeListener(@NotNull StatsKey key, @NotNull BiConsumer<StatsRecord, Integer> handler);
 
-    void registerModuloListener(@NotNull StatsKey key, int divisor, @NotNull Consumer<StatsRecord> handler);
+    void registerIntervalListener(@NotNull StatsKey key, int interval, @NotNull Consumer<StatsRecord> handler);
 
 }
