@@ -44,7 +44,7 @@ public class BrickStatsManager implements StatsManager {
         });
 
         mapped.keySet().forEach(id -> {
-            containers.put(id, new BrickStatsContainer(id, List.of()));
+            containers.put(id, new BrickStatsContainer(id, mapped.get(id)));
         });
 
         scheduler.asyncRepeating(() -> save(30), 5, TimeUnit.SECONDS);
