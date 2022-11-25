@@ -1,14 +1,12 @@
 package com.guflimc.brick.stats.api;
 
 import com.guflimc.brick.stats.api.container.StatsContainer;
-import com.guflimc.brick.stats.api.container.StatsRecord;
-import com.guflimc.brick.stats.api.relation.RelationProvider;
+import com.guflimc.brick.stats.api.event.SubscriptionBuilder;
 import com.guflimc.brick.stats.api.key.StatsKey;
+import com.guflimc.brick.stats.api.relation.RelationProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.IntFunction;
 
 public interface StatsManager {
@@ -33,10 +31,6 @@ public interface StatsManager {
 
     void registerRelationProvider(@NotNull RelationProvider relationProvider);
 
-    void registerMilestoneListener(@NotNull StatsKey key, int milestone, @NotNull Consumer<StatsRecord> handler);
-
-    void registerChangeListener(@NotNull StatsKey key, @NotNull BiConsumer<StatsRecord, Integer> handler);
-
-    void registerIntervalListener(@NotNull StatsKey key, int interval, @NotNull Consumer<StatsRecord> handler);
+    SubscriptionBuilder subscribe();
 
 }

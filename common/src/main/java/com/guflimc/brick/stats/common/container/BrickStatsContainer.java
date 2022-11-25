@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class BrickStatsContainer implements StatsContainer {
 
+    private final static UUID EMPTY_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
     private final UUID id;
     private final Map<RecordKey, DStatsRecord> records = new ConcurrentHashMap<>();
 
@@ -50,6 +52,10 @@ public class BrickStatsContainer implements StatsContainer {
     }
 
     public DStatsRecord find(UUID relation, @NotNull StatsKey key) {
+        if ( relation == null ) {
+            relation = EMPTY_UUID;
+        }
+
         RecordKey recKey = new RecordKey(key.name(), relation);
         records.computeIfAbsent(recKey, k -> new DStatsRecord(id, key.name(), 0));
         return records.get(recKey);

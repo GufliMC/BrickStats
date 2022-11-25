@@ -2,7 +2,7 @@
 create table stats (
   id                            varchar(40) not null,
   entity_id                     varchar(40) not null,
-  relation                      varchar(40),
+  relation                      varchar(40) default '00000000-0000-0000-0000-000000000000' not null,
   keyname                       varchar(255) not null,
   value                         integer default 0 not null,
   created_at                    datetime(6) not null,

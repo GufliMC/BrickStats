@@ -5,18 +5,19 @@ import com.guflimc.brick.scheduler.api.Scheduler;
 import com.guflimc.brick.stats.api.StatsManager;
 import com.guflimc.brick.stats.api.container.StatsContainer;
 import com.guflimc.brick.stats.api.container.StatsRecord;
+import com.guflimc.brick.stats.api.event.*;
 import com.guflimc.brick.stats.api.key.StatsKey;
 import com.guflimc.brick.stats.api.relation.RelationProvider;
 import com.guflimc.brick.stats.common.container.BrickStatsContainer;
 import com.guflimc.brick.stats.common.domain.DStatsRecord;
+import com.guflimc.brick.stats.common.event.AbstractSubscriptionBuilder;
+import com.guflimc.brick.stats.common.event.subscriptions.AbstractSubscription;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.IntFunction;
 
 public class BrickStatsManager implements StatsManager {
@@ -36,7 +37,7 @@ public class BrickStatsManager implements StatsManager {
             mapped.computeIfAbsent(r.id(), (x) -> new ArrayList<>());
             mapped.get(r.id()).add(r);
 
-            if ( r.relation() != null ) {
+            if (r.relation() != null) {
                 mapped.computeIfAbsent(r.relation(), (x) -> new ArrayList<>());
                 mapped.get(r.relation()).add(r);
             }
@@ -90,12 +91,12 @@ public class BrickStatsManager implements StatsManager {
     public void update(@NotNull UUID id, UUID relation, @NotNull StatsKey key,
                        @NotNull IntFunction<Integer> updater, @NotNull Collection<UUID> passed) {
         DStatsRecord rec = find(id).find(relation, key);
-        int oldValue = rec.value();
+        int previousValue = rec.value();
 
         rec.setValue(updater.apply(rec.value()));
         savingQueue.add(rec);
 
-        handleUpdate(id, key, oldValue, rec);
+        handleUpdate(key, rec, previousValue);
 
         if (key.parent() != null) {
             update(id, relation, key.parent(), updater, new HashSet<>());
@@ -124,56 +125,79 @@ public class BrickStatsManager implements StatsManager {
 
     //
 
-    private final Set<MilestoneListener> milestoneListeners = new HashSet<>();
+    private final Set<BrickSubscription> subscriptions = new HashSet<>();
 
-    private record MilestoneListener(@NotNull StatsKey key, int milestone, @NotNull Consumer<StatsRecord> handler) {
+    private void handleUpdate(@NotNull StatsKey key, @NotNull StatsRecord record, int previousValue) {
+        Event event = new Event(key, record, previousValue);
+        new HashSet<>(subscriptions).forEach(sub -> sub.execute(event));
     }
 
-    private final Set<ChangeListener> changeListeners = new HashSet<>();
-
-    private record ChangeListener(@NotNull StatsKey key, @NotNull BiConsumer<StatsRecord, Integer> handler) {
+    @Override
+    public SubscriptionBuilder subscribe() {
+        return new BrickSubscriptionBuilder();
     }
 
-    private final Set<IntervalListener> intervalListeners = new HashSet<>();
+    //
 
-    private record IntervalListener(@NotNull StatsKey key, int interval, @NotNull Consumer<StatsRecord> handler) {
+    private class BrickSubscription extends AbstractSubscription {
+
+        public BrickSubscription(@NotNull EventHandler handler, @NotNull Filter filter) {
+            super(handler, filter);
+        }
+
+        @Override
+        public void unsubscribe() {
+            subscriptions.remove(this);
+        }
     }
 
-    private void handleUpdate(@NotNull UUID id, @NotNull StatsKey key, int oldValue, StatsRecord record) {
-        milestoneListeners.stream().filter(ml -> ml.key.equals(key))
-                .filter(ml -> oldValue < ml.milestone && record.value() > ml.milestone)
-                .forEach(ml -> ml.handler.accept(record));
+    private class BrickSubscriptionBuilder extends AbstractSubscriptionBuilder {
 
-        changeListeners.stream().filter(cl -> cl.key.equals(key))
-                .forEach(cl -> cl.handler.accept(record, oldValue));
+        private Subscription subscribe(@NotNull Filter extraFilter) {
+            Filter combined = event -> filter.test(event) && extraFilter.test(event);
+            return subscribe(new BrickSubscription(handler, combined));
+        }
 
-        intervalListeners.stream().filter(ml -> ml.key.equals(key))
-                .forEach(ml -> {
-                    int oldAmount = oldValue / ml.interval;
-                    int newAmount = record.value() / ml.interval;
+        private Subscription subscribe(@NotNull BrickSubscription sub) {
+            subscriptions.add(sub);
+            return sub;
+        }
+
+        //
+
+        @Override
+        public Subscription milestone(int milestone) {
+            return subscribe(event -> event.previousValue() < milestone
+                    && event.record().value() > milestone);
+        }
+
+        @Override
+        public Subscription change() {
+            return subscribe(event -> true);
+        }
+
+        @Override
+        public Subscription interval(int interval) {
+            return subscribe(new BrickSubscription(handler, filter) {
+                @Override
+                public void execute(Event event) {
+                    if (!filter.test(event)) {
+                        return;
+                    }
+
+                    int oldAmount = event.previousValue() / interval;
+                    int newAmount = event.record().value() / interval;
                     int diff = newAmount - oldAmount;
                     if (diff < 0) {
                         return;
                     }
 
                     for (int i = 0; i < diff; i++) {
-                        ml.handler.accept(record);
+                        handler.handle(this, event);
                     }
-                });
-    }
+                }
+            });
+        }
 
-    @Override
-    public void registerMilestoneListener(@NotNull StatsKey key, int milestone, @NotNull Consumer<StatsRecord> handler) {
-        milestoneListeners.add(new MilestoneListener(key, milestone, handler));
-    }
-
-    @Override
-    public void registerChangeListener(@NotNull StatsKey key, @NotNull BiConsumer<StatsRecord, Integer> handler) {
-        changeListeners.add(new ChangeListener(key, handler));
-    }
-
-    @Override
-    public void registerIntervalListener(@NotNull StatsKey key, int interval, @NotNull Consumer<StatsRecord> handler) {
-        intervalListeners.add(new IntervalListener(key, interval, handler));
     }
 }

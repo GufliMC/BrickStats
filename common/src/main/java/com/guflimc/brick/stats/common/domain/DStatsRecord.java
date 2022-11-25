@@ -16,6 +16,8 @@ import java.util.UUID;
 @Index(columnNames = {"entity_id", "relation", "keyname"}, unique = true)
 public class DStatsRecord implements StatsRecord {
 
+    private final static UUID EMPTY_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
     @Id
     @GeneratedValue
     private UUID id;
@@ -23,9 +25,11 @@ public class DStatsRecord implements StatsRecord {
     @Column(nullable = false)
     private UUID entityId;
 
-    private UUID relation;
+    @Column(nullable = false)
+    @DbDefault("00000000-0000-0000-0000-000000000000")
+    private UUID relation = EMPTY_UUID;
 
-    @Column(name="keyname", nullable = false)
+    @Column(name = "keyname", nullable = false)
     private String key;
 
     @DbDefault("0")
@@ -42,9 +46,12 @@ public class DStatsRecord implements StatsRecord {
 
     public DStatsRecord(@NotNull UUID entityId, UUID relation, @NotNull String key, int value) {
         this.entityId = entityId;
-        this.relation = relation;
         this.key = key;
         this.value = value;
+
+        if ( relation != null ) {
+            this.relation = relation;
+        }
     }
 
     public DStatsRecord(@NotNull UUID entityId, @NotNull String key, int value) {
@@ -58,7 +65,7 @@ public class DStatsRecord implements StatsRecord {
 
     @Override
     public UUID relation() {
-        return relation;
+        return relation.equals(EMPTY_UUID) ? null : relation;
     }
 
     public String key() {
