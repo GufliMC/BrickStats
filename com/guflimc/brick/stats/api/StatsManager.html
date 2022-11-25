@@ -100,21 +100,10 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#readAll(java.util.UUID)" class="member-name-link">readAll</a><wbr>(@NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;id)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#registerChangeListener(com.guflimc.brick.stats.api.key.StatsKey,java.util.function.BiConsumer)" class="member-name-link">registerChangeListener</a><wbr>(@NotNull <a href="key/StatsKey.html" title="class in com.guflimc.brick.stats.api.key">StatsKey</a>&nbsp;key,
- @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="container/StatsRecord.html" title="interface in com.guflimc.brick.stats.api.container">StatsRecord</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;handler)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#registerRelationProvider(com.guflimc.brick.stats.api.relation.RelationProvider)" class="member-name-link">registerRelationProvider</a><wbr>(@NotNull <a href="relation/RelationProvider.html" title="interface in com.guflimc.brick.stats.api.relation">RelationProvider</a>&nbsp;relationProvider)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#registerIntervalListener(com.guflimc.brick.stats.api.key.StatsKey,int,java.util.function.Consumer)" class="member-name-link">registerIntervalListener</a><wbr>(@NotNull <a href="key/StatsKey.html" title="class in com.guflimc.brick.stats.api.key">StatsKey</a>&nbsp;key,
- int&nbsp;interval,
- @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Consumer.html" title="class or interface in java.util.function" class="external-link">Consumer</a>&lt;<a href="container/StatsRecord.html" title="interface in com.guflimc.brick.stats.api.container">StatsRecord</a>&gt;&nbsp;handler)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#registerMilestoneListener(com.guflimc.brick.stats.api.key.StatsKey,int,java.util.function.Consumer)" class="member-name-link">registerMilestoneListener</a><wbr>(@NotNull <a href="key/StatsKey.html" title="class in com.guflimc.brick.stats.api.key">StatsKey</a>&nbsp;key,
- int&nbsp;milestone,
- @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Consumer.html" title="class or interface in java.util.function" class="external-link">Consumer</a>&lt;<a href="container/StatsRecord.html" title="interface in com.guflimc.brick.stats.api.container">StatsRecord</a>&gt;&nbsp;handler)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#registerRelationProvider(com.guflimc.brick.stats.api.relation.RelationProvider)" class="member-name-link">registerRelationProvider</a><wbr>(@NotNull <a href="relation/RelationProvider.html" title="interface in com.guflimc.brick.stats.api.relation">RelationProvider</a>&nbsp;relationProvider)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="event/SubscriptionBuilder.html" title="interface in com.guflimc.brick.stats.api.event">SubscriptionBuilder</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#subscribe()" class="member-name-link">subscribe</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#update(java.util.UUID,com.guflimc.brick.stats.api.key.StatsKey,java.util.function.IntFunction)" class="member-name-link">update</a><wbr>(@NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;id,
@@ -230,32 +219,9 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="registerMilestoneListener(com.guflimc.brick.stats.api.key.StatsKey,int,java.util.function.Consumer)">
-<h3>registerMilestoneListener</h3>
-<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">registerMilestoneListener</span><wbr><span class="parameters">(@NotNull
- @NotNull <a href="key/StatsKey.html" title="class in com.guflimc.brick.stats.api.key">StatsKey</a>&nbsp;key,
- int&nbsp;milestone,
- @NotNull
- @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Consumer.html" title="class or interface in java.util.function" class="external-link">Consumer</a>&lt;<a href="container/StatsRecord.html" title="interface in com.guflimc.brick.stats.api.container">StatsRecord</a>&gt;&nbsp;handler)</span></div>
-</section>
-</li>
-<li>
-<section class="detail" id="registerChangeListener(com.guflimc.brick.stats.api.key.StatsKey,java.util.function.BiConsumer)">
-<h3>registerChangeListener</h3>
-<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">registerChangeListener</span><wbr><span class="parameters">(@NotNull
- @NotNull <a href="key/StatsKey.html" title="class in com.guflimc.brick.stats.api.key">StatsKey</a>&nbsp;key,
- @NotNull
- @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/BiConsumer.html" title="class or interface in java.util.function" class="external-link">BiConsumer</a>&lt;<a href="container/StatsRecord.html" title="interface in com.guflimc.brick.stats.api.container">StatsRecord</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&gt;&nbsp;handler)</span></div>
-</section>
-</li>
-<li>
-<section class="detail" id="registerIntervalListener(com.guflimc.brick.stats.api.key.StatsKey,int,java.util.function.Consumer)">
-<h3>registerIntervalListener</h3>
-<div class="member-signature"><span class="return-type">void</span>&nbsp;<span class="element-name">registerIntervalListener</span><wbr><span class="parameters">(@NotNull
- @NotNull <a href="key/StatsKey.html" title="class in com.guflimc.brick.stats.api.key">StatsKey</a>&nbsp;key,
- int&nbsp;interval,
- @NotNull
- @NotNull <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Consumer.html" title="class or interface in java.util.function" class="external-link">Consumer</a>&lt;<a href="container/StatsRecord.html" title="interface in com.guflimc.brick.stats.api.container">StatsRecord</a>&gt;&nbsp;handler)</span></div>
+<section class="detail" id="subscribe()">
+<h3>subscribe</h3>
+<div class="member-signature"><span class="return-type"><a href="event/SubscriptionBuilder.html" title="interface in com.guflimc.brick.stats.api.event">SubscriptionBuilder</a></span>&nbsp;<span class="element-name">subscribe</span>()</div>
 </section>
 </li>
 </ul>

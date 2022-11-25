@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.guflimc.brick.stats.api"},{"l":"com.guflimc.brick.stats.api.container"},{"l":"com.guflimc.brick.stats.api.key"},{"l":"com.guflimc.brick.stats.api.relation"}];updateSearchResults();
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.guflimc.brick.stats.api"},{"l":"com.guflimc.brick.stats.api.container"},{"l":"com.guflimc.brick.stats.api.event"},{"l":"com.guflimc.brick.stats.api.key"},{"l":"com.guflimc.brick.stats.api.relation"}];updateSearchResults();
