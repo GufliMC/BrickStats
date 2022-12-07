@@ -1,35 +1,53 @@
 package com.guflimc.brick.stats.api;
 
-import com.guflimc.brick.stats.api.container.StatsContainer;
+import com.guflimc.brick.stats.api.actor.Actor;
+import com.guflimc.brick.stats.api.container.Container;
+import com.guflimc.brick.stats.api.container.Record;
 import com.guflimc.brick.stats.api.event.SubscriptionBuilder;
 import com.guflimc.brick.stats.api.key.StatsKey;
 import com.guflimc.brick.stats.api.relation.RelationProvider;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.UUID;
+import java.util.List;
 import java.util.function.IntFunction;
 
 public interface StatsManager {
 
-    int read(@NotNull UUID id, @NotNull StatsKey key);
+    Container find(@NotNull Actor... actors);
 
-    int read(@NotNull UUID id, UUID relation, @NotNull StatsKey key);
+    Container find(@NotNull Actor.ActorSet actors);
 
-    void update(@NotNull UUID id, @NotNull StatsKey key, @NotNull IntFunction<Integer> updater);
+    //
 
-    void update(@NotNull UUID id, UUID relation, @NotNull StatsKey key, @NotNull IntFunction<Integer> updater);
+    /**
+     * This will also update permutations of the actor set.
+     */
+    void update(@NotNull Actor.ActorSet actors, @NotNull StatsKey key, @NotNull IntFunction<Integer> updater);
 
-    default void write(@NotNull UUID id, @NotNull StatsKey key, int value) {
-        write(id, null, key, value);
+    /**
+     * This will first find the full actor set by traversing relations and then {@link #update(Actor.ActorSet, StatsKey, IntFunction)}.
+     */
+    void update(@NotNull Actor actor, @NotNull StatsKey key, @NotNull IntFunction<Integer> updater);
+
+    //
+
+    List<Record> select(@NotNull String actorType, @NotNull StatsKey key, int limit, boolean asc);
+
+    default List<Record> select(@NotNull String actorType, @NotNull StatsKey key, int limit) {
+        return select(actorType, key, limit, false);
     }
 
-    default void write(@NotNull UUID id, UUID relation, @NotNull StatsKey key, int value) {
-        update(id, relation, key, ignored -> value);
+    default List<Record> select(@NotNull String actorType, @NotNull StatsKey key) {
+        return select(actorType, key, Integer.MAX_VALUE);
     }
 
-    StatsContainer readAll(@NotNull UUID id);
+    //
 
-    void registerRelationProvider(@NotNull RelationProvider relationProvider);
+    void registerRelations(@NotNull RelationProvider relationProvider);
+
+    void unregisterRelations(@NotNull RelationProvider relationProvider);
+
+    //
 
     SubscriptionBuilder subscribe();
 

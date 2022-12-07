@@ -1,6 +1,7 @@
-package com.guflimc.brick.stats.spigot.jobs;
+package com.guflimc.brick.stats.spigot.tasks;
 
 import com.guflimc.brick.stats.api.StatsAPI;
+import com.guflimc.brick.stats.api.actor.Actor;
 import com.guflimc.brick.stats.api.key.Keys;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -8,7 +9,7 @@ import org.bukkit.entity.Player;
 
 import java.util.*;
 
-public class MovementJob implements Runnable {
+public class MovementTask implements Runnable {
 
     private final Map<UUID, Location> locations = new HashMap<>();
     private final Map<UUID, Double> cache = new HashMap<>();
@@ -35,7 +36,7 @@ public class MovementJob implements Runnable {
             if (current > 1) {
                 int floor = (int) Math.floor(current);
                 current -= floor;
-                StatsAPI.get().update(id, Keys.DISTANCE_MOVED, x -> x + floor);
+                StatsAPI.get().update(Actor.player(id), Keys.DISTANCE_MOVED, x -> x + floor);
             }
 
             cache.put(id, current);

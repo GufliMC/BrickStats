@@ -3,13 +3,15 @@ package com.guflimc.brick.stats.common;
 import com.guflimc.brick.orm.api.database.DatabaseContext;
 import com.guflimc.brick.scheduler.api.Scheduler;
 import com.guflimc.brick.stats.api.StatsManager;
-import com.guflimc.brick.stats.api.container.StatsContainer;
-import com.guflimc.brick.stats.api.container.StatsRecord;
+import com.guflimc.brick.stats.api.actor.Actor;
+import com.guflimc.brick.stats.api.container.Container;
+import com.guflimc.brick.stats.api.container.Record;
 import com.guflimc.brick.stats.api.event.*;
 import com.guflimc.brick.stats.api.key.StatsKey;
 import com.guflimc.brick.stats.api.relation.RelationProvider;
 import com.guflimc.brick.stats.common.container.BrickStatsContainer;
-import com.guflimc.brick.stats.common.domain.DStatsRecord;
+import com.guflimc.brick.stats.common.domain.DActor;
+import com.guflimc.brick.stats.common.domain.DRecord;
 import com.guflimc.brick.stats.common.event.AbstractSubscriptionBuilder;
 import com.guflimc.brick.stats.common.event.subscriptions.AbstractSubscription;
 import org.jetbrains.annotations.NotNull;
@@ -19,117 +21,159 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 
 public class BrickStatsManager implements StatsManager {
 
-    private final Map<UUID, BrickStatsContainer> containers = new ConcurrentHashMap<>();
-    private final Set<RelationProvider> relationProviders = new CopyOnWriteArraySet<>();
-
-    private final Queue<DStatsRecord> savingQueue = new ArrayDeque<>();
     private final DatabaseContext databaseContext;
+
+    private final Queue<DRecord> savingQueue = new ArrayDeque<>();
+
+    private final Map<Actor.TempActor, DActor> actors = new ConcurrentHashMap<>();
+    private final Map<Actor.ActorSet, BrickStatsContainer> containers = new ConcurrentHashMap<>();
+
+    private final Set<BrickSubscription> subscriptions = new HashSet<>();
+
+    private final Set<RelationProvider> relationProviders = new CopyOnWriteArraySet<>();
 
     public BrickStatsManager(DatabaseContext databaseContext, Scheduler scheduler) {
         this.databaseContext = databaseContext;
 
-        List<DStatsRecord> records = databaseContext.findAllAsync(DStatsRecord.class).join();
-        Map<UUID, Collection<DStatsRecord>> mapped = new HashMap<>();
-        records.forEach(r -> {
-            mapped.computeIfAbsent(r.id(), (x) -> new ArrayList<>());
-            mapped.get(r.id()).add(r);
+        // load actors
+        databaseContext.findAllAsync(DActor.class).join()
+                .forEach(actor -> actors.put(new Actor.TempActor(actor.id(), actor.type()), actor));
 
-            if (r.relation() != null) {
-                mapped.computeIfAbsent(r.relation(), (x) -> new ArrayList<>());
-                mapped.get(r.relation()).add(r);
-            }
-        });
+        // load records
+        databaseContext.findAllAsync(DRecord.class).join()
+                .forEach(record -> containers.computeIfAbsent(record.actors(),
+                                a -> new BrickStatsContainer(this, a))
+                        .add(record));
 
-        mapped.keySet().forEach(id -> {
-            containers.put(id, new BrickStatsContainer(id, mapped.get(id)));
-        });
-
+        // save task
         scheduler.asyncRepeating(() -> save(30), 5, TimeUnit.SECONDS);
+
+        // info task
+        scheduler.asyncRepeating(() -> {
+            System.out.println(" ----- Stats of BrickStats -----");
+            System.out.println("Actors: " + actors.size());
+            System.out.println("Containers: " + containers.size());
+            System.out.println("Records: " + containers.values().stream().mapToInt(c -> c.stats().size()).sum());
+        }, 300, TimeUnit.SECONDS);
     }
 
     public void save(int max) {
-        Set<Object> recordsToSave = new HashSet<>();
+        Set<Object> entitiesToSave = new HashSet<>();
         for (int i = 0; i < max; i++) {
-            DStatsRecord record = savingQueue.poll();
-            if (record == null) {
+            Object entity = savingQueue.poll();
+            if (entity == null) {
                 break;
             }
-            recordsToSave.add(record);
+            entitiesToSave.add(entity);
         }
 
-        databaseContext.persistAsync(recordsToSave).join();
-    }
-
-    private BrickStatsContainer find(@NotNull UUID id) {
-        containers.computeIfAbsent(id, (v) -> new BrickStatsContainer(id, List.of()));
-        return containers.get(id);
-    }
-
-    @Override
-    public int read(@NotNull UUID id, @NotNull StatsKey key) {
-        return read(id, null, key);
-    }
-
-    @Override
-    public int read(@NotNull UUID id, UUID relation, @NotNull StatsKey key) {
-        return find(id).read(relation, key);
-    }
-
-    @Override
-    public void update(@NotNull UUID id, @NotNull StatsKey key, @NotNull IntFunction<Integer> updater) {
-        update(id, null, key, updater);
-    }
-
-    @Override
-    public void update(@NotNull UUID id, UUID relation, @NotNull StatsKey key, @NotNull IntFunction<Integer> updater) {
-        update(id, relation, key, updater, new HashSet<>());
-    }
-
-    public void update(@NotNull UUID id, UUID relation, @NotNull StatsKey key,
-                       @NotNull IntFunction<Integer> updater, @NotNull Collection<UUID> passed) {
-        DStatsRecord rec = find(id).find(relation, key);
-        int previousValue = rec.value();
-
-        rec.setValue(updater.apply(rec.value()));
-        savingQueue.add(rec);
-
-        handleUpdate(key, rec, previousValue);
-
-        if (key.parent() != null) {
-            update(id, relation, key.parent(), updater, new HashSet<>());
-        }
-
-        passed.add(id);
-
-        // also update relations
-        relationProviders.stream()
-                .map(r -> r.relation(id, key).orElse(null))
-                .filter(Objects::nonNull)
-                .filter(r -> !passed.contains(r))
-                .distinct()
-                .forEach(r -> update(r, id, key, updater));
-    }
-
-    @Override
-    public StatsContainer readAll(@NotNull UUID id) {
-        return find(id);
-    }
-
-    @Override
-    public void registerRelationProvider(@NotNull RelationProvider relationProvider) {
-        relationProviders.add(relationProvider);
+        databaseContext.persistAsync(entitiesToSave).join();
     }
 
     //
 
-    private final Set<BrickSubscription> subscriptions = new HashSet<>();
+    private DActor find(@NotNull Actor.TempActor actor) {
+        if (actors.containsKey(actor)) {
+            return actors.get(actor);
+        }
+        DActor dactor = new DActor(actor.id(), actor.type());
+        actors.put(actor, dactor);
+        return dactor;
+    }
 
-    private void handleUpdate(@NotNull StatsKey key, @NotNull StatsRecord record, int previousValue) {
-        Event event = new Event(key, record, previousValue);
+    @Override
+    public Container find(Actor.@NotNull ActorSet actors) {
+        Actor.ActorSet copy = new Actor.ActorSet(actors.stream()
+                .map(a -> a instanceof Actor.TempActor ta ? find(ta) : a).toList());
+
+        if (!containers.containsKey(copy)) {
+            containers.put(copy, new BrickStatsContainer(this, copy));
+        }
+
+        return containers.get(copy);
+    }
+
+    @Override
+    public Container find(@NotNull Actor... actors) {
+        return find(new Actor.ActorSet(actors));
+    }
+
+    //
+
+
+    @Override
+    public void update(Actor.@NotNull ActorSet actors, @NotNull StatsKey key, @NotNull IntFunction<Integer> updater) {
+        find(actors).update(key, updater);
+
+        if (actors.size() <= 1) {
+            return;
+        }
+
+        for (Actor actor : actors) {
+            Set<Actor> ns = actors.copySet();
+            ns.remove(actor);
+
+            update(new Actor.ActorSet(ns), key, updater);
+        }
+    }
+
+    @Override
+    public void update(@NotNull Actor actor, @NotNull StatsKey key, @NotNull IntFunction<Integer> updater) {
+        Set<Actor> actors = relationProviders.stream()
+                .map(r -> r.provide(actor, key))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        actors.add(actor);
+
+        update(new Actor.ActorSet(actors), key, updater);
+    }
+
+    //
+
+    @Override
+    public List<Record> select(@NotNull String actorType, @NotNull StatsKey key, int limit, boolean asc) {
+        Comparator<Record> comp = Comparator.comparingInt(Record::value);
+        if (!asc) {
+            comp = comp.reversed();
+        }
+
+        List<Record> records = containers.keySet().stream()
+                .filter(a -> a.size() == 1)
+                .filter(a -> a.iterator().next().type().equals(actorType))
+                .map(a -> find(a).find(key).orElse(null))
+                .filter(Objects::nonNull)
+                .sorted(comp)
+                .toList();
+
+        if (records.size() > limit) {
+            records = records.subList(0, limit);
+        }
+        return records;
+    }
+
+    //
+
+    @Override
+    public void registerRelations(@NotNull RelationProvider relationProvider) {
+        relationProviders.add(relationProvider);
+    }
+
+    @Override
+    public void unregisterRelations(@NotNull RelationProvider relationProvider) {
+        relationProviders.remove(relationProvider);
+    }
+
+    //
+
+    public void handleUpdate(@NotNull Record record, int previousValue) {
+        Event event = new Event(record, previousValue);
         new HashSet<>(subscriptions).forEach(sub -> sub.execute(event));
+
+        savingQueue.add((DRecord) record);
     }
 
     @Override

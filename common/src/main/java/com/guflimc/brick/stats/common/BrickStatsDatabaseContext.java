@@ -3,7 +3,8 @@ package com.guflimc.brick.stats.common;
 import com.guflimc.brick.orm.ebean.database.EbeanConfig;
 import com.guflimc.brick.orm.ebean.database.EbeanDatabaseContext;
 import com.guflimc.brick.orm.ebean.database.EbeanMigrations;
-import com.guflimc.brick.stats.common.domain.DStatsRecord;
+import com.guflimc.brick.stats.common.domain.DActor;
+import com.guflimc.brick.stats.common.domain.DRecord;
 import io.ebean.annotation.Platform;
 
 import java.io.IOException;
@@ -29,7 +30,10 @@ public class BrickStatsDatabaseContext extends EbeanDatabaseContext {
     }
 
     private static final Class<?>[] APPLICABLE_CLASSES = new Class[]{
-            DStatsRecord.class
+            DRecord.class,
+
+            DActor.ActorPK.class,
+            DActor.class
     };
 
     public static void main(String[] args) throws IOException, SQLException {

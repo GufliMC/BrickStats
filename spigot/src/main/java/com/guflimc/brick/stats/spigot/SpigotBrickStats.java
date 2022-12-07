@@ -6,8 +6,8 @@ import com.guflimc.brick.stats.api.StatsAPI;
 import com.guflimc.brick.stats.common.BrickStatsConfig;
 import com.guflimc.brick.stats.common.BrickStatsDatabaseContext;
 import com.guflimc.brick.stats.common.BrickStatsManager;
-import com.guflimc.brick.stats.spigot.jobs.MovementJob;
-import com.guflimc.brick.stats.spigot.jobs.PlayTimeJob;
+import com.guflimc.brick.stats.spigot.tasks.MovementTask;
+import com.guflimc.brick.stats.spigot.tasks.PlayTimeTask;
 import com.guflimc.brick.stats.spigot.listeners.BlockListener;
 import com.guflimc.brick.stats.spigot.listeners.DeathListener;
 import org.bukkit.plugin.PluginManager;
@@ -53,8 +53,8 @@ public class SpigotBrickStats extends JavaPlugin {
         pm.registerEvents(new DeathListener(), this);
 
         // start jobs
-        scheduler.syncRepeating(new PlayTimeJob(), 1, TimeUnit.SECONDS);
-        scheduler.syncRepeating(new MovementJob(), 1, TimeUnit.SECONDS);
+        scheduler.syncRepeating(new PlayTimeTask(), 1, TimeUnit.SECONDS);
+        scheduler.syncRepeating(new MovementTask(), 1, TimeUnit.SECONDS);
 
         getLogger().info("Enabled " + nameAndVersion() + ".");
     }

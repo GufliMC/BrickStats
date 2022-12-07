@@ -1,57 +1,77 @@
 package com.guflimc.brick.stats.common.container;
 
-import com.guflimc.brick.stats.api.container.StatsContainer;
+import com.guflimc.brick.stats.api.actor.Actor;
+import com.guflimc.brick.stats.api.container.Container;
+import com.guflimc.brick.stats.api.container.Record;
 import com.guflimc.brick.stats.api.key.StatsKey;
-import com.guflimc.brick.stats.common.domain.DStatsRecord;
+import com.guflimc.brick.stats.common.BrickStatsManager;
+import com.guflimc.brick.stats.common.domain.DRecord;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 
-public class BrickStatsContainer implements StatsContainer {
+public class BrickStatsContainer implements Container {
 
-    private final UUID id;
-    private final Map<RecordKey, DStatsRecord> records = new ConcurrentHashMap<>();
+    private final BrickStatsManager manager;
 
-    private record RecordKey(@NotNull String key, UUID relation) {
+    private final Actor.ActorSet actors;
+    private final Set<DRecord> records = new CopyOnWriteArraySet<>();
+
+    public BrickStatsContainer(BrickStatsManager manager, Actor.ActorSet actors) {
+        this.manager = manager;
+        this.actors = actors;
     }
 
-    public BrickStatsContainer(UUID id, Collection<DStatsRecord> records) {
-        this.id = id;
-        for (DStatsRecord rec : records) {
-            if ( rec.id().equals(id) ) {
-                this.records.put(new RecordKey(rec.key(), rec.relation()), rec);
-            } else {
-                this.records.put(new RecordKey(rec.key(), rec.id()), rec);
-            }
+    public void add(DRecord record) {
+        if ( !record.actors().equals(actors) ) {
+           throw new IllegalArgumentException("Record actors does not match container actors.");
         }
+        records.add(record);
+    }
+
+    //
+
+    @Override
+    public Actor.ActorSet actors() {
+        return actors;
     }
 
     @Override
-    public UUID id() {
-        return id;
+    public Collection<StatsKey> stats() {
+        return records.stream().map(DRecord::key).collect(Collectors.toUnmodifiableSet());
+    }
+
+    @Override
+    public Optional<Record> find(@NotNull StatsKey key) {
+        return records.stream()
+                .filter(r -> r.key().equals(key))
+                .map(r -> (Record) r)
+                .findFirst();
     }
 
     @Override
     public int read(@NotNull StatsKey key) {
-        return read(null, key);
+        return find(key).map(Record::value).orElse(0);
     }
 
     @Override
-    public int read(UUID relation, @NotNull StatsKey key) {
-        RecordKey recKey = new RecordKey(key.name(), relation);
-        return records.containsKey(recKey) ? records.get(recKey).value() : 0;
+    public void update(@NotNull StatsKey key, @NotNull IntFunction<Integer> updater) {
+        DRecord record = (DRecord) find(key).orElse(null);
+        if (record == null) {
+            record = new DRecord(key, actors);
+            records.add(record);
+        }
+
+        int previousValue = record.value();
+        record.setValue(updater.apply(previousValue));
+
+        manager.handleUpdate(record, previousValue);
+//        manager.handlePermutations(record, updater);
     }
 
-    public DStatsRecord find(@NotNull StatsKey key) {
-        return find(null, key);
-    }
-
-    public DStatsRecord find(UUID relation, @NotNull StatsKey key) {
-        RecordKey recKey = new RecordKey(key.name(), relation);
-        records.computeIfAbsent(recKey, k -> new DStatsRecord(id, key.name(), 0));
-        return records.get(recKey);
-    }
 }
