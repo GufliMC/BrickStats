@@ -198,8 +198,9 @@ public class BrickStatsManager implements StatsManager {
     private class BrickSubscriptionBuilder extends AbstractSubscriptionBuilder {
 
         private Subscription subscribe(@NotNull Filter extraFilter) {
-            Filter combined = event -> filter.test(event) && extraFilter.test(event);
-            return subscribe(new BrickSubscription(handler, combined));
+            List<Filter> filters = new ArrayList<>(this.filters);
+            filters.add(extraFilter);
+            return subscribe(new BrickSubscription(handler, Filter.allOf(filters)));
         }
 
         private Subscription subscribe(@NotNull BrickSubscription sub) {
@@ -222,10 +223,10 @@ public class BrickStatsManager implements StatsManager {
 
         @Override
         public Subscription interval(int interval) {
-            return subscribe(new BrickSubscription(handler, filter) {
+            return subscribe(new BrickSubscription(handler, Filter.allOf(filters)) {
                 @Override
                 public void execute(Event event) {
-                    if (!filter.test(event)) {
+                    if ( !filter.test(event) ) {
                         return;
                     }
 

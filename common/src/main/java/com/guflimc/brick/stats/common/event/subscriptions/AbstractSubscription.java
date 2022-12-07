@@ -8,8 +8,8 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractSubscription implements Subscription {
 
-    private final EventHandler handler;
-    private final Filter filter;
+    protected final EventHandler handler;
+    protected final Filter filter;
 
     public AbstractSubscription(@NotNull EventHandler handler, @NotNull Filter filter) {
         this.handler = handler;

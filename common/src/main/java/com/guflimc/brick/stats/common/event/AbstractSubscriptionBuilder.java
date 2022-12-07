@@ -5,14 +5,17 @@ import com.guflimc.brick.stats.api.event.Filter;
 import com.guflimc.brick.stats.api.event.SubscriptionBuilder;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class AbstractSubscriptionBuilder implements SubscriptionBuilder {
 
-    protected Filter filter = event -> true;
+    protected List<Filter> filters = new ArrayList<>();
     protected EventHandler handler;
 
     @Override
     public SubscriptionBuilder filter(@NotNull Filter filter) {
-        this.filter = filter;
+        this.filters.add(filter);
         return this;
     }
 
